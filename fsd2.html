@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Digital LMS — Admin Portal</title>
+  <style>
+    /* Simple modern styling */
+    :root{
+      --bg:#f6f7fb; --card:#fff; --muted:#6b7280; --accent:#2563eb;
+      --success:#16a34a; --danger:#dc2626; --shadow: 0 6px 18px rgba(20,20,50,0.06);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    html,body{height:100%; margin:0; background:var(--bg); color:#0f172a;}
+    .container{max-width:1100px;margin:28px auto;padding:20px;}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    header h1{margin:0;font-size:1.2rem}
+    .tabs{display:flex;gap:8px; margin-bottom:18px}
+    .tab{background:var(--card); padding:10px 12px;border-radius:10px;cursor:pointer; box-shadow:var(--shadow);}
+    .tab.active{outline:2px solid rgba(37,99,235,0.12); transform:translateY(-2px);}
+    .card{background:var(--card); padding:16px;border-radius:12px; box-shadow:var(--shadow); margin-bottom:16px;}
+    .grid{display:grid;grid-template-columns:1fr 340px; gap:16px;}
+    .table{width:100%; border-collapse:collapse;}
+    table th, table td{padding:10px;border-bottom:1px solid #eef2f7; text-align:left; font-size:0.95rem}
+    table th{color:var(--muted); font-weight:600; font-size:0.85rem}
+    .form-row{display:flex; gap:8px; margin-bottom:8px}
+    label{font-size:0.85rem;color:var(--muted)}
+    input,select,textarea{width:100%; padding:8px;border:1px solid #e6e9ef;border-radius:8px;}
+    button{background:var(--accent);color:white;border:none;padding:10px 12px;border-radius:8px;cursor:pointer}
+    button.ghost{background:transparent;color:var(--accent); border:1px solid #e2e8f0}
+    .actions button{margin-right:6px}
+    .muted{color:var(--muted); font-size:0.9rem}
+    .small{font-size:0.85rem}
+    .pill{display:inline-block;padding:6px 8px;border-radius:999px;background:#eef2ff;color:var(--accent);font-weight:600}
+    .danger{background:#fff0f0;color:var(--danger);border:1px solid #fee2e2;padding:6px 8px;border-radius:8px}
+    .success{background:#eefbe9;color:var(--success);border:1px solid #dcfce7;padding:6px 8px;border-radius:8px}
+    .center{display:flex;align-items:center;justify-content:center}
+    .report {display:flex;flex-direction:column;gap:10px}
+    @media (max-width:920px){ .grid{grid-template-columns:1fr; } .tabs{flex-wrap:wrap} }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="https://media.istockphoto.com/id/1408368183/photo/lms-learning-management-system-for-lesson-and-online-education-course-application-study-e.jpg?s=612x612&w=0&k=20&c=ZiEtEhRcVk8EUVM8ZHvZOYwYRjNIeH_-4YN_38aBBx0=" alt="https://media.istockphoto.com/id/1408368183/photo/lms-learning-management-system-for-lesson-and-online-education-course-application-study-e.jpg?s=612x612&w=0&k=20&c=ZiEtEhRcVk8EUVM8ZHvZOYwYRjNIeH_-4YN_38aBBx0=" style="width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#fff,#f3f4f6)"/>
+      <div>
+        <h1>Digital Learning Management System — Admin</h1>
+        <div class="muted small">Manage students, faculty, courses & enrollments</div>
+      </div>
+    </header>
+
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-tab="students">Students</div>
+      <div class="tab" data-tab="faculty">Faculty</div>
+      <div class="tab" data-tab="courses">Courses</div>
+      <div class="tab" data-tab="enrollments">Enrollments</div>
+      <div class="tab" data-tab="reports">Reports</div>
+    </div>
+
+    <div id="content">
+      <!-- Students -->
+      <div class="card" id="panel-students">
+        <div class="grid">
+          <div>
+            <h3>Students <span id="students-count" class="muted small"></span></h3>
+            <div id="students-list" class="card" style="padding:0"></div>
+          </div>
+
+          <div class="card">
+            <h4>Add Student & Enroll</h4>
+            <div class="small muted">This will call stored proc AddStudentAndEnroll (backend should expose an endpoint).</div>
+            <div style="height:12px"></div>
+            <div>
+              <div class="form-row"><input id="s_id" placeholder="student_id (int)" /></div>
+              <div class="form-row"><input id="s_name" placeholder="Name" /></div>
+              <div class="form-row"><input id="s_email" placeholder="Email" /></div>
+              <div class="form-row"><input id="s_phone" placeholder="Phone" /></div>
+              <div class="form-row"><input id="s_dept" placeholder="Department" /></div>
+              <div class="form-row"><input id="s_enrolled_at" type="datetime-local" /></div>
+              <div class="form-row"><select id="c_id"><option value="">-- Select Course to enroll --</option></select></div>
+              <div class="form-row"><input id="enroll_date" type="datetime-local" /></div>
+              <div class="form-row"><button id="btn-add-student">Add & Enroll</button></div>
+              <div id="student-form-msg" class="small muted"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Faculty -->
+      <div class="card" id="panel-faculty" style="display:none">
+        <div class="grid">
+          <div>
+            <h3>Faculty</h3>
+            <div id="faculty-list" class="card" style="padding:0"></div>
+          </div>
+
+          <div class="card">
+            <h4>Quick: Assign Faculty to Course</h4>
+            <div class="form-row"><select id="assign-course"><option value="">Select Course</option></select></div>
+            <div class="form-row"><select id="assign-faculty"><option value="">Select Faculty</option></select></div>
+            <div class="form-row"><button id="btn-assign">Assign</button></div>
+            <div id="assign-msg" class="small muted"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Courses -->
+      <div class="card" id="panel-courses" style="display:none">
+        <div class="grid">
+          <div>
+            <h3>Courses</h3>
+            <div id="courses-list" class="card" style="padding:0"></div>
+          </div>
+
+          <div class="card">
+            <h4>Add Course</h4>
+            <div class="form-row"><input id="course_id" placeholder="course_id (int)" /></div>
+            <div class="form-row"><input id="course_name" placeholder="Course Name" /></div>
+            <div class="form-row"><input id="credits" placeholder="Credits" type="number" /></div>
+            <div class="form-row"><input id="semester" placeholder="Semester" /></div>
+            <div class="form-row"><button id="btn-add-course">Create Course</button></div>
+            <div id="course-msg" class="small muted"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enrollments -->
+      <div class="card" id="panel-enrollments" style="display:none">
+        <h3>Enrollments</h3>
+        <div id="enrollments-list" class="card" style="padding:0"></div>
+        <div class="card" style="margin-top:12px">
+          <h4>Update Progress / Drop Enrollment</h4>
+          <div class="form-row"><select id="sel-enrollment"><option value="">Select Enrollment</option></select></div>
+          <div class="form-row"><select id="new-progress"><option>Ongoing</option><option>Completed</option><option>Dropped</option></select></div>
+          <div class="form-row">
+            <button id="btn-update-progress">Update Progress</button>
+            <button id="btn-drop" class="danger">Drop Enrollment</button>
+          </div>
+          <div id="enroll-msg" class="small muted"></div>
+        </div>
+      </div>
+
+      <!-- Reports -->
+      <div class="card" id="panel-reports" style="display:none">
+        <h3>Reports</h3>
+        <div class="report">
+          <div>
+            <button id="btn-report-enrollment-summary" class="ghost">Enrollment Summary Per Student</button>
+            <button id="btn-report-course-enroll" class="ghost">Course-wise Enrollments</button>
+            <button id="btn-report-top-students" class="ghost">Top Students by Dept</button>
+          </div>
+          <div id="report-output" class="card" style="min-height:120px"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+/*
+  Frontend JS assumptions:
+  - Backend root base URL: /api
+  - Endpoints (adjust if your backend differs):
+    GET  /api/students                -> [{student_id, name, email, phone, department, enrolled_at}, ...]
+    GET  /api/faculty                 -> [{faculty_id, name, email, department, joined_at}, ...]
+    GET  /api/courses                 -> [{course_id, faculty_id, course_name, credits, semester}, ...]
+    GET  /api/enrollments             -> [{enrollment_id, student_id, course_id, enrolled_on, progress, score?}, ...]
+    POST /api/students/enroll         -> body: { s_id, s_name, s_email, s_phone, s_dept, s_enrolled_at, c_id, enroll_date }
+                                       -> triggers AddStudentAndEnroll stored proc; returns created student/enrollment
+    POST /api/courses                 -> create course (body matches fields)
+    PUT  /api/courses/:id/assign      -> body: { facultyID }  (calls AssignFacultyToCourse)
+    PUT  /api/enrollments/:id/progress-> body: { newProgress } (calls UpdateStudentProgress)
+    DELETE /api/enrollments/:id       -> drop enrollment (backend should log course_dropouts via trigger)
+    GET  /api/views/student_enrollment_summary  -> view results
+    GET  /api/views/course_enrollments          -> view results
+    GET  /api/views/top_students_by_dept        -> view results
+*/
+
+const API_ROOT = '/api';
+
+function $(id){ return document.getElementById(id); }
+
+/* TAB switching */
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', ()=> {
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const tab = t.dataset.tab;
+    document.querySelectorAll('[id^="panel-"]').forEach(p=> p.style.display='none');
+    $('panel-'+tab).style.display='block';
+    // lazy load
+    if(tab==='students') loadStudents();
+    if(tab==='faculty') loadFaculty();
+    if(tab==='courses') loadCourses();
+    if(tab==='enrollments') loadEnrollments();
+  });
+});
+
+/* Generic fetch wrapper */
+async function apiFetch(path, opts = {}) {
+  try {
+    const res = await fetch(API_ROOT + path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...opts
+    });
+    if(!res.ok){
+      const text = await res.text();
+      throw new Error(res.status + ' ' + text);
+    }
+    const contentType = res.headers.get('content-type') || '';
+    if(contentType.includes('application/json')) return await res.json();
+    return await res.text();
+  } catch (err) {
+    console.error('API ERROR', err);
+    throw err;
+  }
+}
+
+/* ---------- STUDENTS ---------- */
+async function loadStudents(){
+  try{
+    const data = await apiFetch('/students');
+    $('students-count').textContent = `(${data.length})`;
+    const table = createTable(['ID','Name','Email','Phone','Dept','Enrolled At'], data.map(s=>[
+      s.student_id, s.name, s.email, s.phone, s.department, s.enrolled_at
+    ]));
+    $('students-list').innerHTML = table;
+    populateSelect('c_id', await getCourses(), 'course_id', 'course_name');
+  } catch(err){
+    $('students-list').innerHTML = `<div class="center small muted">Failed to load students: ${err.message}</div>`;
+  }
+}
+
+/* ADD student & enroll (calls stored procedure endpoint) */
+$('btn-add-student').addEventListener('click', async ()=> {
+  const payload = {
+    s_id: parseInt($('s_id').value) || null,
+    s_name: $('s_name').value.trim(),
+    s_email: $('s_email').value.trim(),
+    s_phone: $('s_phone').value.trim(),
+    s_dept: $('s_dept').value.trim(),
+    s_enrolled_at: $('s_enrolled_at').value ? new Date($('s_enrolled_at').value).toISOString() : null,
+    c_id: parseInt($('c_id').value) || null,
+    enroll_date: $('enroll_date').value ? new Date($('enroll_date').value).toISOString() : null
+  };
+  $('student-form-msg').textContent = 'Submitting...';
+  try{
+    await apiFetch('/students/enroll', { method: 'POST', body: JSON.stringify(payload) });
+    $('student-form-msg').textContent = 'Student added and enrolled successfully.';
+    clearStudentForm();
+    loadStudents();
+    loadEnrollments();
+  }catch(err){
+    $('student-form-msg').textContent = 'Error: ' + err.message;
+  }
+});
+function clearStudentForm(){
+  ['s_id','s_name','s_email','s_phone','s_dept','s_enrolled_at','c_id','enroll_date'].forEach(id=>$(id).value='');
+}
+
+/* ---------- FACULTY ---------- */
+async function loadFaculty(){
+  try{
+    const data = await apiFetch('/faculty');
+    const table = createTable(['ID','Name','Email','Dept','Joined At'], data.map(f=>[
+      f.faculty_id, f.name, f.email, f.department, f.joined_at
+    ]));
+    $('faculty-list').innerHTML = table;
+    populateSelect('assign-faculty', data, 'faculty_id', 'name');
+  }catch(err){
+    $('faculty-list').innerHTML = `<div class="center small muted">Failed to load faculty: ${err.message}</div>`;
+  }
+}
+
+/* Assign faculty to course */
+$('btn-assign').addEventListener('click', async ()=>{
+  const courseId = $('assign-course').value;
+  const facultyID = $('assign-faculty').value;
+  if(!courseId || !facultyID){ $('assign-msg').textContent = 'Select both course and faculty.'; return; }
+  $('assign-msg').textContent = 'Updating...';
+  try{
+    await apiFetch(`/courses/${courseId}/assign`, { method: 'PUT', body: JSON.stringify({ facultyID: parseInt(facultyID) }) });
+    $('assign-msg').textContent = 'Faculty assigned successfully.';
+    loadCourses();
+  }catch(err){ $('assign-msg').textContent = 'Error: '+err.message; }
+});
+
+/* ---------- COURSES ---------- */
+async function getCourses(){ return await apiFetch('/courses'); }
+
+async function loadCourses(){
+  try{
+    const data = await getCourses();
+    const table = createTable(['ID','Name','Faculty','Credits','Semester'], data.map(c=>[
+      c.course_id, c.course_name, c.faculty_id || '-', c.credits, c.semester
+    ]));
+    $('courses-list').innerHTML = table;
+    populateSelect('assign-course', data, 'course_id', 'course_name');
+    populateSelect('c_id', data, 'course_id', 'course_name'); // also refreshing for add-student form
+  }catch(err){
+    $('courses-list').innerHTML = `<div class="center small muted">Failed to load courses: ${err.message}</div>`;
+  }
+}
+
+/* Create course */
+$('btn-add-course').addEventListener('click', async ()=>{
+  const payload = {
+    course_id: parseInt($('course_id').value) || null,
+    course_name: $('course_name').value.trim(),
+    credits: parseInt($('credits').value) || 0,
+    semester: $('semester').value.trim()
+  };
+  $('course-msg').textContent = 'Creating...';
+  try{
+    await apiFetch('/courses', { method:'POST', body: JSON.stringify(payload) });
+    $('course-msg').textContent = 'Course created.';
+    ['course_id','course_name','credits','semester'].forEach(id=>$(id).value='');
+    loadCourses();
+  }catch(err){ $('course-msg').textContent = 'Error: '+err.message; }
+});
+
+/* ---------- ENROLLMENTS ---------- */
+async function loadEnrollments(){
+  try{
+    const data = await apiFetch('/enrollments');
+    const rows = data.map(e => [ e.enrollment_id, e.student_id, e.course_id, e.enrolled_on, e.progress ]);
+    const table = createTable(['Enroll ID','Student ID','Course ID','Enrolled On','Progress','Actions'], rows, data.map(e => {
+      return `<div class="actions">
+        <button class="ghost" onclick="viewEnrollment(${e.enrollment_id})">View</button>
+      </div>`;
+    }));
+    $('enrollments-list').innerHTML = table;
+    populateSelect('sel-enrollment', data, 'enrollment_id', item => `${item.enrollment_id} — S:${item.student_id} C:${item.course_id} [${item.progress}]`);
+  }catch(err){
+    $('enrollments-list').innerHTML = `<div class="center small muted">Failed to load enrollments: ${err.message}</div>`;
+  }
+}
+
+window.viewEnrollment = function(id){
+  alert('Open enrollment details for: ' + id + '\nYou can extend this modal to show student/course names via additional API calls.');
+}
+
+/* Update progress */
+$('btn-update-progress').addEventListener('click', async ()=>{
+  const enrolId = $('sel-enrollment').value;
+  const newProgress = $('new-progress').value;
+  if(!enrolId){ $('enroll-msg').textContent = 'Select enrollment.'; return; }
+  $('enroll-msg').textContent = 'Updating...';
+  try{
+    await apiFetch(`/enrollments/${enrolId}/progress`, { method:'PUT', body: JSON.stringify({ newProgress }) });
+    $('enroll-msg').textContent = 'Progress updated.';
+    loadEnrollments();
+    loadReports();
+  }catch(err){ $('enroll-msg').textContent = 'Error: '+err.message; }
+});
+
+/* Drop enrollment */
+$('btn-drop').addEventListener('click', async ()=>{
+  const enrolId = $('sel-enrollment').value;
+  if(!enrolId){ $('enroll-msg').textContent = 'Select enrollment.'; return; }
+  if(!confirm('Confirm drop?')) return;
+  try{
+    await apiFetch(`/enrollments/${enrolId}`, { method:'DELETE' });
+    $('enroll-msg').textContent = 'Enrollment dropped.';
+    loadEnrollments();
+    loadReports();
+  }catch(err){ $('enroll-msg').textContent = 'Error: '+err.message; }
+});
+
+/* ---------- REPORTS (VIEWS) ---------- */
+async function loadReports(){
+  // prefetch nothing here; buttons below fetch specific views
+}
+$('btn-report-enrollment-summary').addEventListener('click', async ()=>{
+  $('report-output').textContent = 'Loading...';
+  try{
+    const data = await apiFetch('/views/student_enrollment_summary');
+    // expected rows: { name, department, total_courses }
+    const table = createTable(['Name','Dept','Total Courses'], data.map(r=>[r.name,r.department,r.total_courses]));
+    $('report-output').innerHTML = table;
+  }catch(err){ $('report-output').textContent = 'Error: '+err.message; }
+});
+$('btn-report-course-enroll').addEventListener('click', async ()=>{
+  $('report-output').textContent = 'Loading...';
+  try{
+    const data = await apiFetch('/views/course_enrollments');
+    const table = createTable(['Course','Total Students'], data.map(r=>[r.course_name, r.total_students]));
+    $('report-output').innerHTML = table;
+  }catch(err){ $('report-output').textContent = 'Error: '+err.message; }
+});
+$('btn-report-top-students').addEventListener('click', async ()=>{
+  $('report-output').textContent = 'Loading...';
+  try{
+    const data = await apiFetch('/views/top_students_by_dept');
+    const table = createTable(['Dept','Student','Avg Score'], data.map(r=>[r.department, r.student_name, r.average_score]));
+    $('report-output').innerHTML = table;
+  }catch(err){ $('report-output').textContent = 'Error: '+err.message; }
+});
+
+/* ---------- UTIL helpers ---------- */
+function createTable(headers, rows, actionHtml = null){
+  let html = '<table class="table"><thead><tr>';
+  headers.forEach(h=> html += `<th>${h}</th>`);
+  html += '</tr></thead><tbody>';
+  rows.forEach((r,i)=>{
+    html += '<tr>';
+    r.forEach(cell => html += `<td>${cell ?? ''}</td>`);
+    if(actionHtml){
+      html += `<td>${actionHtml[i] ?? ''}</td>`;
+    } else if(headers.length > r.length){
+      // pad if needed
+      html += '<td></td>';
+    }
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function populateSelect(selectId, items, valueKey='id', labelKey='name'){
+  const sel = $(selectId);
+  if(!sel) return;
+  const fnLabel = typeof labelKey === 'function' ? labelKey : (it => it[labelKey]);
+  sel.innerHTML = '<option value="">-- Select --</option>' + items.map(it => {
+    const v = it[valueKey];
+    const label = fnLabel(it) || v;
+    return `<option value="${v}">${escapeHtml(label)}</option>`;
+  }).join('');
+}
+
+function escapeHtml(s){ if(s==null) return ''; return String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+
+/* initial load */
+loadStudents();
+loadCourses();
+loadFaculty();
+loadEnrollments();
+loadReports();
+
+</script>
+</body>
+</html>
